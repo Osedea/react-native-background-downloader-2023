@@ -8,6 +8,7 @@
 //
 #import "RNBackgroundDownloader.h"
 #import "RNBGDTaskConfig.h"
+#import "SSZipArchive.h"
 
 #define ID_TO_CONFIG_MAP_KEY @"com.eko.bgdownloadidmap"
 
@@ -324,18 +325,28 @@ RCT_EXPORT_METHOD(completeHandler:(nonnull NSString *)jobId
     @synchronized (sharedLock) {
         RNBGDTaskConfig *taskConfig = taskToConfigMap[@(downloadTask.taskIdentifier)];
         if (taskConfig != nil) {
-            NSError *error = [self getServerError:downloadTask];
-            if (error == nil) {
-                [self saveDownloadedFile:taskConfig downloadURL:location error:&error];
-            }
-            if (self.bridge) {
-                if (error == nil) {
-                    NSDictionary *responseHeaders = ((NSHTTPURLResponse *)downloadTask.response).allHeaderFields;
-                    [self sendEventWithName:@"downloadComplete" body:@{@"id": taskConfig.id, @"headers": responseHeaders, @"location": taskConfig.destination}];
-                } else {
-                    [self sendEventWithName:@"downloadFailed" body:@{@"id": taskConfig.id, @"error": [error localizedDescription]}];
+            // NSError *error = [self getServerError:downloadTask];
+            // if (error == nil) {
+            //     [self saveDownloadedFile:taskConfig downloadURL:location error:&error];
+            // }
+            // if (self.bridge) {
+            //     if (error == nil) {
+            //         NSDictionary *responseHeaders = ((NSHTTPURLResponse *)downloadTask.response).allHeaderFields;
+            //         [self sendEventWithName:@"downloadComplete" body:@{@"id": taskConfig.id, @"headers": responseHeaders, @"location": taskConfig.destination}];
+            //     } else {
+            //         [self sendEventWithName:@"downloadFailed" body:@{@"id": taskConfig.id, @"error": [error localizedDescription]}];
+            //     }
+            // }
+            [SSZipArchive unzipFileAtPath:location.path toDestination:taskCofig.destination progressHandler:^(NSString *entry, unz_file_info zipInfo, long entryNumber, long total) {
+            } completionHandler:^(NSString *path, BOOL succeeded, NSError * _Nullable error) {
+                if (self.bridge) {
+                    if (succeeded && error == nil) {
+                        [self sendEventWithName:@"downloadComplete" body:@{@"id": taskCofig.id}];
+                    } else {
+                        [self sendEventWithName:@"downloadFailed" body:@{@"id": taskCofig.id, @"error": [error localizedDescription]}];
+                    }
                 }
-            }
+                  }];
             [self removeTaskFromMap:downloadTask];
         }
     }
