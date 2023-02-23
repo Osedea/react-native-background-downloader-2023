@@ -12,7 +12,8 @@ Pod::Spec.new do |s|
   s.source       = { git: 'https://github.com/kesha-antonov/react-native-background-downloader.git', tag: 'master' }
   s.source_files = 'ios/**/*.{h,m}'
   s.requires_arc = true
-
+  
+  s.dependency 'React'
   s.dependency 'React-Core'
   s.dependency 'SSZipArchive', '2.2.3'
 end
