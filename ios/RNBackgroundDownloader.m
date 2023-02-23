@@ -9,6 +9,7 @@
 #import "RNBackgroundDownloader.h"
 #import "RNBGDTaskConfig.h"
 #import "SSZipArchive.h"
+#import <RNBackgroundDownloader.h>
 
 #define ID_TO_CONFIG_MAP_KEY @"com.eko.bgdownloadidmap"
 
@@ -28,7 +29,10 @@ static CompletionHandler storedCompletionHandler;
 }
 
 RCT_EXPORT_MODULE();
-
+- (void)application:(UIApplication *)application handleEventsForBackgroundURLSession:(NSString *)identifier completionHandler:(void (^)(void))completionHandler
+{
+  [RNBackgroundDownloader setCompletionHandlerWithIdentifier:identifier completionHandler:completionHandler];
+}
 - (dispatch_queue_t)methodQueue
 {
     return dispatch_queue_create("com.eko.backgrounddownloader", DISPATCH_QUEUE_SERIAL);
