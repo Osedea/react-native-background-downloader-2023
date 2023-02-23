@@ -346,7 +346,7 @@ RCT_EXPORT_METHOD(completeHandler:(nonnull NSString *)jobId
                         [self sendEventWithName:@"downloadFailed" body:@{@"id": taskConfig.id, @"error": [error localizedDescription]}];
                     }
                 }
-                  }];
+             }];
             [self removeTaskFromMap:downloadTask];
         }
     }
