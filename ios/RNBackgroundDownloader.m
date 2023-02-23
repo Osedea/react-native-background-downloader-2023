@@ -343,7 +343,9 @@ RCT_EXPORT_METHOD(completeHandler:(nonnull NSString *)jobId
                     if (succeeded && error == nil) {
                         [self sendEventWithName:@"downloadComplete" body:@{@"id": taskConfig.id}];
                     } else {
+                         NSLog(@"HERE error ", [error localizedDescription]);
                         [self sendEventWithName:@"downloadFailed" body:@{@"id": taskConfig.id, @"error": [error localizedDescription]}];
+
                     }
                 }
                   }];
