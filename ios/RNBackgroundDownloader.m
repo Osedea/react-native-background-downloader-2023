@@ -338,14 +338,15 @@ RCT_EXPORT_METHOD(completeHandler:(nonnull NSString *)jobId
             //     }
             // }
             [SSZipArchive unzipFileAtPath:location.path toDestination:taskConfig.destination progressHandler:^(NSString *entry, unz_file_info zipInfo, long entryNumber, long total) {
-            } completionHandler:^(NSString *path, BOOL succeeded, NSError * _Nullable error) {
                 if (self.bridge) {
                     if (succeeded && error == nil) {
                         [self sendEventWithName:@"downloadComplete" body:@{@"id": taskConfig.id}];
                     } else {
-                         NSLog(@"HERE error ", [error localizedDescription]);
+                        if(error == nil){
+                            NSLog(@"error == nil");
+                        }
                         [self sendEventWithName:@"downloadFailed" body:@{@"id": taskConfig.id, @"error": [error localizedDescription]}];
-
+                        NSLog(@"HERE error 2", [error localizedDescription]);
                     }
                 }
                   }];
@@ -397,19 +398,27 @@ RCT_EXPORT_METHOD(completeHandler:(nonnull NSString *)jobId
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
     NSLog(@"[RNBackgroundDownloader] - [didCompleteWithError]");
+    NSLog(@"HERE error URLSession ", error );
+    NSLog(@"HERE error URLSession", [error localizedDescription]);
     @synchronized (sharedLock) {
+        NSLog(@"HERE error == nil", [error localizedDescription]);
         if (error == nil)
             return;
 
         RNBGDTaskConfig *taskConfig = taskToConfigMap[@(task.taskIdentifier)];
         if (taskConfig == nil)
+        NSLog(@"HERE taskConfig == nil", [error localizedDescription]);
             return;
 
         if (self.bridge) {
             [self sendEventWithName:@"downloadFailed" body:@{@"id": taskConfig.id, @"error": [error localizedDescription]}];
+            NSLog(@"HERE error 11  ", error );
+            NSLog(@"HERE error 22", [error localizedDescription]);
         }
         // IF WE CAN'T RESUME TO DOWNLOAD LATER
         if (error.userInfo[NSURLSessionDownloadTaskResumeData] == nil) {
+            NSLog(@"HERE error  error.userInfo  ", error.userInfo[NSURLSessionDownloadTaskResumeData] );
+            NSLog(@"HERE error  error.userInfo",  error.userInfo);
             [self removeTaskFromMap:task];
         }
     }
