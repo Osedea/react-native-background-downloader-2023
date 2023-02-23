@@ -325,10 +325,10 @@ RCT_EXPORT_METHOD(completeHandler:(nonnull NSString *)jobId
     @synchronized (sharedLock) {
         RNBGDTaskConfig *taskConfig = taskToConfigMap[@(downloadTask.taskIdentifier)];
         if (taskConfig != nil) {
-            // NSError *error = [self getServerError:downloadTask];
-            // if (error == nil) {
-            //     [self saveDownloadedFile:taskConfig downloadURL:location error:&error];
-            // }
+            NSError *error = [self getServerError:downloadTask];
+            if (error == nil) {
+                [self saveDownloadedFile:taskConfig downloadURL:location error:&error];
+            }
             // if (self.bridge) {
             //     if (error == nil) {
             //         NSDictionary *responseHeaders = ((NSHTTPURLResponse *)downloadTask.response).allHeaderFields;
@@ -337,13 +337,13 @@ RCT_EXPORT_METHOD(completeHandler:(nonnull NSString *)jobId
             //         [self sendEventWithName:@"downloadFailed" body:@{@"id": taskConfig.id, @"error": [error localizedDescription]}];
             //     }
             // }
-            [SSZipArchive unzipFileAtPath:location.path toDestination:taskCofig.destination progressHandler:^(NSString *entry, unz_file_info zipInfo, long entryNumber, long total) {
+            [SSZipArchive unzipFileAtPath:location.path toDestination:taskConfig.destination progressHandler:^(NSString *entry, unz_file_info zipInfo, long entryNumber, long total) {
             } completionHandler:^(NSString *path, BOOL succeeded, NSError * _Nullable error) {
                 if (self.bridge) {
                     if (succeeded && error == nil) {
-                        [self sendEventWithName:@"downloadComplete" body:@{@"id": taskCofig.id}];
+                        [self sendEventWithName:@"downloadComplete" body:@{@"id": taskConfig.id}];
                     } else {
-                        [self sendEventWithName:@"downloadFailed" body:@{@"id": taskCofig.id, @"error": [error localizedDescription]}];
+                        [self sendEventWithName:@"downloadFailed" body:@{@"id": taskConfig.id, @"error": [error localizedDescription]}];
                     }
                 }
                   }];
@@ -359,26 +359,26 @@ RCT_EXPORT_METHOD(completeHandler:(nonnull NSString *)jobId
 - (void)URLSession:(NSURLSession *)session downloadTask:(NSURLSessionDownloadTask *)downloadTask didWriteData:(int64_t)bytesWritten totalBytesWritten:(int64_t)totalBytesWritten totalBytesExpectedToWrite:(int64_t)totalBytesExpectedToWrite {
     NSLog(@"[RNBackgroundDownloader] - [didWriteData]");
     @synchronized (sharedLock) {
-        RNBGDTaskConfig *taskCofig = taskToConfigMap[@(downloadTask.taskIdentifier)];
-        if (taskCofig != nil) {
-            // NSLog(@"[RNBackgroundDownloader] - [didWriteData] destination - %@", taskCofig.destination);
-            if (!taskCofig.reportedBegin) {
+        RNBGDTaskConfig *taskConfig = taskToConfigMap[@(downloadTask.taskIdentifier)];
+        if (taskConfig != nil) {
+            // NSLog(@"[RNBackgroundDownloader] - [didWriteData] destination - %@", taskConfig.destination);
+            if (!taskConfig.reportedBegin) {
                 NSDictionary *responseHeaders = ((NSHTTPURLResponse *)downloadTask.response).allHeaderFields;
                 if (self.bridge) {
                     [self sendEventWithName:@"downloadBegin" body:@{
-                        @"id": taskCofig.id,
+                        @"id": taskConfig.id,
                         @"expectedBytes": [NSNumber numberWithLongLong: totalBytesExpectedToWrite],
                         @"headers": responseHeaders
                     }];
                 }
-                taskCofig.reportedBegin = YES;
+                taskConfig.reportedBegin = YES;
             }
 
-            NSNumber *prevPercent = idToPercentMap[taskCofig.id];
+            NSNumber *prevPercent = idToPercentMap[taskConfig.id];
             NSNumber *percent = [NSNumber numberWithFloat:(float)totalBytesWritten/(float)totalBytesExpectedToWrite];
             if ([percent floatValue] - [prevPercent floatValue] > 0.01f) {
-                progressReports[taskCofig.id] = @{@"id": taskCofig.id, @"written": [NSNumber numberWithLongLong: totalBytesWritten], @"total": [NSNumber numberWithLongLong: totalBytesExpectedToWrite], @"percent": percent};
-                idToPercentMap[taskCofig.id] = percent;
+                progressReports[taskConfig.id] = @{@"id": taskConfig.id, @"written": [NSNumber numberWithLongLong: totalBytesWritten], @"total": [NSNumber numberWithLongLong: totalBytesExpectedToWrite], @"percent": percent};
+                idToPercentMap[taskConfig.id] = percent;
             }
 
             NSDate *now = [[NSDate alloc] init];
@@ -399,12 +399,12 @@ RCT_EXPORT_METHOD(completeHandler:(nonnull NSString *)jobId
         if (error == nil)
             return;
 
-        RNBGDTaskConfig *taskCofig = taskToConfigMap[@(task.taskIdentifier)];
-        if (taskCofig == nil)
+        RNBGDTaskConfig *taskConfig = taskToConfigMap[@(task.taskIdentifier)];
+        if (taskConfig == nil)
             return;
 
         if (self.bridge) {
-            [self sendEventWithName:@"downloadFailed" body:@{@"id": taskCofig.id, @"error": [error localizedDescription]}];
+            [self sendEventWithName:@"downloadFailed" body:@{@"id": taskConfig.id, @"error": [error localizedDescription]}];
         }
         // IF WE CAN'T RESUME TO DOWNLOAD LATER
         if (error.userInfo[NSURLSessionDownloadTaskResumeData] == nil) {
