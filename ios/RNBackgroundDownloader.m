@@ -362,7 +362,7 @@ RCT_EXPORT_METHOD(completeHandler:(nonnull NSString *)jobId
         RNBGDTaskConfig *taskConfig = taskToConfigMap[@(downloadTask.taskIdentifier)];
         if (taskConfig != nil) {
             // NSLog(@"[RNBackgroundDownloader] - [didWriteData] destination - %@", taskConfig.destination);
-            if (!taskConfig.reportedBegin) {
+            if (!taskConfig.reportedBegin  && self.bridge) {
                 NSDictionary *responseHeaders = ((NSHTTPURLResponse *)downloadTask.response).allHeaderFields;
                 if (self.bridge) {
                     [self sendEventWithName:@"downloadBegin" body:@{
