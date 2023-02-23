@@ -364,7 +364,7 @@ RCT_EXPORT_METHOD(completeHandler:(nonnull NSString *)jobId
             // NSLog(@"[RNBackgroundDownloader] - [didWriteData] destination - %@", taskConfig.destination);
             if (!taskConfig.reportedBegin) {
                 NSDictionary *responseHeaders = ((NSHTTPURLResponse *)downloadTask.response).allHeaderFields;
-                if (self.bridge) {
+                if (self.bridge && self.bridge) {
                     [self sendEventWithName:@"downloadBegin" body:@{
                         @"id": taskConfig.id,
                         @"expectedBytes": [NSNumber numberWithLongLong: totalBytesExpectedToWrite],

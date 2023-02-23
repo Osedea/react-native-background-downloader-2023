@@ -344,12 +344,7 @@ public class RNBackgroundDownloaderModule extends ReactContextBaseJavaModule imp
     synchronized(sharedLock) {
       RNBGDTaskConfig config = requestIdToConfig.get(download.getId());
       if (config != null) {
-        WritableMap params = Arguments.createMap();
-        params.putString("id", config.id);
-        params.putString("location", config.destination);
-
-        ee.emit("downloadComplete", params);
-             final String filePath = download.getFile();
+        final String filePath = download.getFile();
         final String taskId = config.id;
         Log.d(getName(), "success callback!");
 
